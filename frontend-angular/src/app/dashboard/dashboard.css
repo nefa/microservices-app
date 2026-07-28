@@ -1,0 +1,9 @@
+.dashboard-page {
+  display: flex;
+  justify-content: center;
+  padding-top: 4rem;
+}
+
+.dashboard-page p-card {
+  width: 400px;
+}
