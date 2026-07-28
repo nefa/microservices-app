@@ -1,5 +1,6 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import type { Request } from 'express';
 import { ChatService } from './chat.service';
 
 // Kept as a plain class for now, no validation decorators yet - this
@@ -9,6 +10,13 @@ import { ChatService } from './chat.service';
 // skipped by accident.
 class ChatMessageDto {
   message: string;
+}
+
+// The shape JwtStrategy.validate() returns (see auth/jwt.strategy.ts) -
+// Passport attaches it to the request as `request.user` once
+// AuthGuard('jwt') has already verified the token's signature/expiry.
+interface AuthenticatedRequest extends Request {
+  user: { userId: number; email: string };
 }
 
 // AuthGuard('jwt') runs JwtStrategy's validation against every request to
@@ -23,8 +31,8 @@ export class ChatController {
 
   @Post()
   @HttpCode(HttpStatus.OK)
-  async chat(@Body() dto: ChatMessageDto) {
-    const reply = await this.chatService.sendMessage(dto.message);
+  async chat(@Body() dto: ChatMessageDto, @Req() request: AuthenticatedRequest) {
+    const reply = await this.chatService.sendMessage(dto.message, request.user.userId);
     return { reply };
   }
 }

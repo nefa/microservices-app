@@ -2,6 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { AxiosError } from 'axios';
 import { firstValueFrom } from 'rxjs';
+import { INTERNAL_API_KEY } from './internal-api.constants';
 
 interface ChatbotReply {
   reply: string;
@@ -20,16 +21,26 @@ export class ChatService {
 
   constructor(private readonly httpService: HttpService) {}
 
-  async sendMessage(message: string): Promise<string> {
+  async sendMessage(message: string, userId: number): Promise<string> {
     try {
-      // HttpService wraps axios but returns an RxJS Observable instead of
-      // a Promise (Nest's HTTP client predates widespread async/await
-      // adoption in the ecosystem). firstValueFrom converts that
-      // Observable into a Promise so this reads like any other awaited
-      // call - the same shape as awaiting an HttpClient request on the
-      // .NET side.
       const response = await firstValueFrom(
-        this.httpService.post<ChatbotReply>(CHATBOT_SERVICE_URL, { message }),
+        this.httpService.post<ChatbotReply>(
+          CHATBOT_SERVICE_URL,
+          { message },
+          {
+            headers: {
+              // Proves this call came from the trusted gateway, not a
+              // direct hit on the Python service's port.
+              'X-Internal-Api-Key': INTERNAL_API_KEY,
+              // The Python service trusts this value BECAUSE it's paired
+              // with the header above - it never validates a JWT itself,
+              // it just trusts whoever holds the shared secret to have
+              // already done that verification (which this gateway did,
+              // via AuthGuard('jwt') on the controller that called us).
+              'X-User-Id': userId.toString(),
+            },
+          },
+        ),
       );
       return response.data.reply;
     } catch (error) {
