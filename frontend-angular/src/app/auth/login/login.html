@@ -1,0 +1,41 @@
+<div class="login-page">
+  <form class="login-form" (ngSubmit)="onSubmit()">
+    <h2>Login</h2>
+
+    <div class="field">
+      <label for="email">Email</label>
+      <input
+        pInputText
+        id="email"
+        type="email"
+        name="email"
+        autocomplete="email"
+        [ngModel]="email()"
+        (ngModelChange)="email.set($event)"
+      />
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <p-password
+        inputId="password"
+        name="password"
+        [feedback]="false"
+        [toggleMask]="true"
+        [ngModel]="password()"
+        (ngModelChange)="password.set($event)"
+      />
+    </div>
+
+    @if (errorMessage()) {
+      <p-message severity="error">{{ errorMessage() }}</p-message>
+    }
+
+    <p-button
+      type="submit"
+      [label]="isSubmitting() ? 'Logging in...' : 'Login'"
+      [loading]="isSubmitting()"
+      [disabled]="isSubmitting()"
+    />
+  </form>
+</div>

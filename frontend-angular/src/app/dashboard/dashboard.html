@@ -1,0 +1,9 @@
+<div class="dashboard-page">
+  <p-card header="Dashboard">
+    @if (currentUser(); as user) {
+      <p>Welcome, {{ user.email }}.</p>
+    }
+
+    <p-button label="Logout" severity="secondary" (onClick)="logout()" />
+  </p-card>
+</div>
