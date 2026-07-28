@@ -1,0 +1,6 @@
+# Catch-all for anything appearing at the repo root - each service
+# folder (gateway-nest, chatbot-rag-python, frontend-angular) also has
+# its own .gitignore for its own tooling-specific files.
+.DS_Store
+.vscode/
+.idea/
