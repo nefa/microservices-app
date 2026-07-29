@@ -1,0 +1,21 @@
+<header class="top-bar">
+  <div class="top-bar-left">
+    <p-button
+      icon="pi pi-bars"
+      [text]="true"
+      [rounded]="true"
+      severity="secondary"
+      ariaLabel="Toggle navigation"
+      (onClick)="onToggleNav()"
+    />
+    <span class="logo">
+      <i class="pi pi-bolt"></i>
+      Console
+    </span>
+  </div>
+
+  <div class="top-bar-right">
+    <p-avatar [label]="avatarLabel()" shape="circle" />
+    <p-button label="Logout" severity="secondary" [text]="true" (onClick)="logout()" />
+  </div>
+</header>

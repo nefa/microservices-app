@@ -2,6 +2,17 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.8.
 
+## Local dev accounts
+
+This app talks to `gateway-nest`, which seeds two test accounts (see
+`gateway-nest/src/database/seed.ts`) - there's no register endpoint yet,
+so use one of these to log in locally:
+
+| Email | Password |
+|---|---|
+| `alice@example.com` | `Password123!` |
+| `bob@example.com` | `Password123!` |
+
 ## Development server
 
 To start a local development server, run:

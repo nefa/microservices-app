@@ -11,7 +11,7 @@ import { Auth } from '../auth';
   selector: 'app-login',
   imports: [FormsModule, InputText, Password, Button, Message],
   templateUrl: './login.html',
-  styleUrl: './login.css',
+  styleUrl: './login.scss',
 })
 export class Login {
   // Plain writable signals hold this component's form state - the
