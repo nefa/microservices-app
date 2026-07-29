@@ -1,25 +1,24 @@
 import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { Card } from 'primeng/card';
 import { Button } from 'primeng/button';
 import { Auth } from '../auth/auth';
+import { TopBar } from '../layout/top-bar/top-bar';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [Card, Button],
+  imports: [Card, Button, RouterLink, TopBar],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.css',
+  styleUrl: './dashboard.scss',
 })
 export class Dashboard {
   private readonly auth = inject(Auth);
-  private readonly router = inject(Router);
 
   // Reading the service's signal directly - the template re-renders
   // automatically whenever currentUser changes, no manual subscription.
   protected readonly currentUser = this.auth.currentUser;
 
-  logout(): void {
-    this.auth.logout();
-    this.router.navigateByUrl('/login');
-  }
+  // Logout now lives in TopBar - Router/logout() logic removed from
+  // here to avoid two different "log out" code paths doing the same
+  // thing in two places.
 }
