@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { ChatModule } from './chat/chat.module';
+import { DocumentsModule } from './documents/documents.module';
 import { User } from './users/user.entity';
 import { UsersModule } from './users/users.module';
 
@@ -41,6 +42,7 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     AuthModule,
     ChatModule,
+    DocumentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

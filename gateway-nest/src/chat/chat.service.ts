@@ -2,7 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { AxiosError } from 'axios';
 import { firstValueFrom } from 'rxjs';
-import { INTERNAL_API_KEY } from './internal-api.constants';
+import { INTERNAL_API_KEY } from '../common/internal-api.constants';
 
 interface ChatbotReply {
   reply: string;
