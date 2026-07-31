@@ -1,0 +1,21 @@
+# Virtual environment
+venv/
+
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+
+# Environment variables
+.env
+
+# OS
+.DS_Store
+
+# IDEs
+.vscode/
+.idea/
+
+# Packaging
+build/
+dist/
+*.egg-info/

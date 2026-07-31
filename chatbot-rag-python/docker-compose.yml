@@ -1,0 +1,28 @@
+services:
+  postgres:
+    # pgvector/pgvector is a plain Postgres image with the pgvector
+    # extension pre-built in - the plain postgres:latest image (used by
+    # gateway-nest/TaskApi) doesn't have it, and installing it into an
+    # already-running container would mean manually compiling the
+    # extension inside that container. Easier to use a dedicated image
+    # built for exactly this instead.
+    #
+    # This is a SEPARATE Postgres instance from the one gateway-nest/
+    # TaskApi share (different container name, different host port) -
+    # each service owning its own database is the correct microservices
+    # pattern, and this service specifically needs an extension the
+    # shared instance doesn't have.
+    image: pgvector/pgvector:pg16
+    container_name: chatbot-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: chatbotdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - chatbot-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  chatbot-postgres-data:
