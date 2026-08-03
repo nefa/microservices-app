@@ -119,6 +119,123 @@ knows *how* to render it, not just what to say:
   of the shared internal-API secret (see below) - no compiler check
   across the language boundary, has to be kept in sync by hand.
 
+## Document review before ingestion (planned)
+
+Today, uploading a document ingests it immediately - `gateway-nest`
+forwards the file straight to `chatbot-rag-python`'s `/documents/ingest`,
+which chunks, embeds, and stores it in one request. That's changing to a
+human-in-the-loop flow: a submitter uploads, a manager reviews and
+approves each document one by one, and only approved documents actually
+get chunked/embedded. This doesn't change the REST-vs-GraphQL call
+pattern above or the Angular -> gateway -> chatbot-rag-python diagram -
+it adds a review gate *inside* that same existing path.
+
+### Flow
+
+```
+submitter uploads  ->  pending review  ->  manager opens/downloads to review
+                                                    |
+                                    +---------------+---------------+
+                                    |                               |
+                                 approve                         reject
+                            (= signs off, see below)      (status + reason,
+                                    |                       no signature)
+                                    v
+                        chunk + embed + store
+                        (existing pipeline, unchanged)
+```
+
+### Where pending documents live
+
+New `pending_document` table on `chatbotdb` (owned by `chatbot-rag-python`,
+alongside the existing `document_chunk` table) - not a new service, not
+object storage, not the filesystem. Reasoning: no new infra needed, and
+Postgres `bytea` is transactional (no half-written uploads) at the file
+sizes this app deals with. Revisit only if file sizes/volume actually
+demand object storage later.
+
+```
+pending_document
+  id                PK
+  source_filename   text
+  format            text            -- 'pdf' | 'csv'
+  content           bytea
+  submitted_by      text (user_id)
+  status            text            -- 'pending' | 'approved' | 'rejected'
+  reviewed_by       text, nullable
+  reviewed_at       timestamp, nullable
+  rejection_reason  text, nullable
+  created_at        timestamp
+```
+
+Approved/rejected rows are kept (status transition), not deleted - this
+is the audit trail, and it's what the signing component (below) attaches
+its signature to.
+
+### Frontend components (`frontend-angular`, under `documents/`)
+
+- **`ingestion-submission-form`** - left column (~50% width). Format
+  select + file picker/dropzone + selected-files list + "Submit for
+  review" button. Replaces the current `ingest` component's
+  immediate-ingest behavior - same upload UI, different verb and
+  endpoint (`/documents/submit`, not `/documents/ingest`).
+- **`ingestion-submitted-template`** - right column (~50% width). The
+  *submitter's* view of their own submissions: filename, submitted/
+  reviewed dates, status pill (pending/approved/rejected), rejection
+  reason inline when rejected.
+- **`ingestion-review-template`** - the *reviewer's* (manager's)
+  equivalent of the list above, deliberately a separate component (not
+  a mode toggle on `ingestion-submitted-template`) since the actions
+  differ: open for review (preview), download, approve (signs off -
+  see below), reject (reason, no signature). A correction/edit
+  mechanism is a likely future addition here but explicitly deferred.
+
+Both list templates share the same ~50/50 two-card layout as the
+submission form; stacks to one column below ~760px.
+
+### Electronic sign-off
+
+The manager's **approve** action is the first real use case for a
+reusable "sign off an action" component (intended to be reused for
+other sign-off points elsewhere in the app later, not document-specific
+by design):
+
+- **Capture vs. key material.** The user performs a drawn signature
+  (canvas capture) as the human consent gesture, but that drawing is
+  *not* used as cryptographic key material - freehand strokes are
+  low-entropy and non-reproducible, so they can't reliably re-derive
+  the same key twice. Instead: a proper asymmetric keypair (WebCrypto
+  ECDSA P-256, non-extractable private key held client-side) is
+  generated once at enrollment; the drawn signature's hash is stored
+  alongside it purely as an audit artifact.
+- **Reuse pattern.** Any sign-off action anywhere in the app builds a
+  canonical descriptor (`{ actionType, resourceId, userId, timestamp }`),
+  hashes it, signs the hash with the enrolled key, and the verifying
+  side checks it against the stored public key - one mechanism, reused
+  per action type, not rebuilt per feature.
+- **Per-file, not per-batch.** Approving *is* signing - there's no
+  separate "sign off the batch once everything's approved" step.
+  Reasoning: a batch-level signature would need to hash a whole set of
+  documents together (batch/merkle-style payload) and still couldn't
+  prove "was document X approved" without reconstructing the rest of
+  the batch. Signing per document keeps each approval independently
+  verifiable and avoids an "approved but not yet signed" limbo state.
+  Reject does not require a signature - you're not attesting to
+  anything by rejecting.
+
+### Open questions
+
+- **Where does the signing capability live** - a new dedicated service
+  (own DB, same proxy pattern `gateway-nest` already uses for
+  `chatbot-rag-python`) vs. a module inside `gateway-nest` reusing its
+  existing JWT auth. Not decided yet.
+- **Notification mechanism for managers** - v1 is a polling unread-count
+  badge in `TopBar`; real-time push (WebSocket/SSE) is a later upgrade,
+  not a blocker.
+- **Roles.** `User` needs a role (`member` | `manager`) surfaced in the
+  JWT before any manager-only route can be gated - a prerequisite for
+  the review/approve pieces above, not yet built.
+
 ## Why the BFF doesn't replace the REST paths
 
 Migrating `login`/`chat`/`ingest` to GraphQL would add a schema, a

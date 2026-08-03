@@ -6,6 +6,7 @@ import { Button } from 'primeng/button';
 import { Message } from 'primeng/message';
 import { Card } from 'primeng/card';
 import { Documents, DocumentFormat } from '../documents';
+import { TopBar } from '../../layout/top-bar/top-bar';
 
 interface FormatOption {
   label: string;
@@ -14,7 +15,7 @@ interface FormatOption {
 
 @Component({
   selector: 'app-ingest',
-  imports: [FormsModule, Select, FileUpload, Button, Message, Card],
+  imports: [FormsModule, Select, FileUpload, Button, Message, Card, TopBar],
   templateUrl: './ingest.html',
   styleUrl: './ingest.scss',
 })
