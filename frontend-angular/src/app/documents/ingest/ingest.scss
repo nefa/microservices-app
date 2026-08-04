@@ -4,44 +4,13 @@
   padding-top: 4rem;
 }
 
-.ingest-page p-card {
+// Targets the child's host element (not its internal p-card) - Angular's
+// emulated style encapsulation only lets a parent reach elements it
+// wrote directly in its own template, and app-ingestion-submission-form
+// is that element here. Width is a placeholder until the two-column
+// layout (this + ingestion-submitted-template) replaces this centered
+// single-card page.
+.ingest-page app-ingestion-submission-form {
+  display: block;
   width: 420px;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.file-list {
-  list-style: none;
-  margin: 0.5rem 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.file-list li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 0.9rem;
-  padding: 0.25rem 0;
-}
-
-.remove-file {
-  border: none;
-  background: none;
-  cursor: pointer;
-  color: var(--p-text-muted-color);
-  font-size: 1rem;
-  line-height: 1;
-  padding: 0 0.25rem;
-}
-
-.remove-file:hover {
-  color: var(--p-red-500);
 }

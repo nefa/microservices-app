@@ -1,0 +1,49 @@
+<p-card header="Submit for review">
+  <div class="field">
+    <label for="format">Format</label>
+    <p-select
+      inputId="format"
+      [options]="formatOptions"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="format()"
+      (ngModelChange)="format.set($event)"
+    />
+  </div>
+
+  <div class="field">
+    <p-fileupload
+      mode="basic"
+      chooseLabel="Choose Files"
+      [multiple]="true"
+      [accept]="acceptedFileType"
+      (onSelect)="onFileSelect($event)"
+    />
+    @if (selectedFiles().length > 0) {
+      <ul class="file-list">
+        @for (file of selectedFiles(); track file) {
+          <li>
+            <span>{{ file.name }}</span>
+            <button type="button" class="remove-file" (click)="removeFile(file)" aria-label="Remove file">
+              &times;
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  @if (errorMessage()) {
+    <p-message severity="error">{{ errorMessage() }}</p-message>
+  }
+  @if (successMessage()) {
+    <p-message severity="success">{{ successMessage() }}</p-message>
+  }
+
+  <p-button
+    label="Submit for review"
+    [loading]="isSubmitting()"
+    [disabled]="isSubmitting() || selectedFiles().length === 0"
+    (onClick)="onSubmit()"
+  />
+</p-card>

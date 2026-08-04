@@ -4,9 +4,8 @@ import { Observable } from 'rxjs';
 
 export type DocumentFormat = 'pdf' | 'csv';
 
-interface IngestResponse {
-  filesIngested: number;
-  chunksStored: number;
+interface SubmitResponse {
+  filesSubmitted: number;
 }
 
 // NOTE: hardcoded here for learning purposes, same caveat as everywhere
@@ -17,12 +16,11 @@ const GATEWAY_URL = 'http://localhost:3000';
 export class Documents {
   private readonly http = inject(HttpClient);
 
-  // This endpoint doesn't exist on the gateway yet - we're building the
-  // Angular side first, on purpose. Calling ingest() right now will fail
-  // with a 404 until the corresponding gateway route is built next. The
-  // request is still shaped correctly so nothing here needs to change
-  // once that endpoint exists.
-  ingest(format: DocumentFormat, files: File[]): Observable<IngestResponse> {
+  // Submits files for manager review - they land in chatbot-rag-python's
+  // pending_document table, not chunked/embedded yet. That only happens
+  // once a manager approves (see ARCHITECTURE.md's "Document review
+  // before ingestion" section).
+  submit(format: DocumentFormat, files: File[]): Observable<SubmitResponse> {
     const formData = new FormData();
     formData.append('format', format);
 
@@ -40,6 +38,6 @@ export class Documents {
     // when it sees the body is a FormData instance. Setting it manually
     // would overwrite that with a header missing the boundary, breaking
     // the upload.
-    return this.http.post<IngestResponse>(`${GATEWAY_URL}/documents/ingest`, formData);
+    return this.http.post<SubmitResponse>(`${GATEWAY_URL}/documents/submit`, formData);
   }
 }
