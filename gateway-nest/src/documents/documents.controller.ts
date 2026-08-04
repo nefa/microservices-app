@@ -23,13 +23,13 @@ export class DocumentsController {
   // disk on this server at all, since we're just relaying them onward.
   // "10" caps how many files one request can carry, as a basic safety
   // limit.
-  @Post('ingest')
+  @Post('submit')
   @UseInterceptors(FilesInterceptor('files', 10, { storage: memoryStorage() }))
-  async ingest(
+  async submit(
     @Body('format') format: string,
     @UploadedFiles() files: Express.Multer.File[],
     @Req() request: AuthenticatedRequest,
   ) {
-    return this.documentsService.ingest(format, files, request.user.userId);
+    return this.documentsService.submit(format, files, request.user.userId);
   }
 }

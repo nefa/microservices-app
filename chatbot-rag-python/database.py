@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import Column, DateTime, Integer, String, create_engine
+from sqlalchemy import Column, DateTime, Integer, LargeBinary, String, create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 # NOTE: hardcoded here for learning purposes, same caveat as every other
@@ -53,6 +53,40 @@ class DocumentChunk(Base):
     embedding = Column(Vector(EMBEDDING_DIMENSION), nullable=False)
 
     ingested_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+
+# A document sitting between upload and the chunk/embed pipeline above -
+# submitting no longer ingests immediately. `content` holds the raw file
+# bytes (LargeBinary -> Postgres bytea) so a reviewer can open/download
+# the original later; nothing is chunked or embedded until approval
+# moves a row from here into DocumentChunk. Rows are kept after review
+# (status flips to approved/rejected) rather than deleted - this table
+# doubles as the audit trail for who submitted/reviewed what and when.
+class PendingDocument(Base):
+    __tablename__ = "pending_document"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    source_filename = Column(String, nullable=False)
+    format = Column(String, nullable=False)
+    content = Column(LargeBinary, nullable=False)
+
+    # The forwarded X-User-Id of whoever submitted this - same trust
+    # model as DocumentChunk.user_id above.
+    submitted_by = Column(String, nullable=False)
+
+    # 'pending' | 'approved' | 'rejected' - not an enum column on
+    # purpose, same reasoning as chatbot-rag-python's response `type`
+    # field (see ARCHITECTURE.md): cheap to extend later without a
+    # migration, and this is a single-service-owned column, not a
+    # cross-language contract that needs stricter enforcement.
+    status = Column(String, nullable=False, default="pending")
+
+    reviewed_by = Column(String, nullable=True)
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+    rejection_reason = Column(String, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 # Base.metadata.create_all(...) is SQLAlchemy's equivalent of TypeORM's

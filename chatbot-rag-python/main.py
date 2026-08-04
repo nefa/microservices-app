@@ -4,7 +4,7 @@ from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, UploadF
 from pydantic import BaseModel
 
 from chunking import parse_csv, parse_pdf
-from database import DocumentChunk, SessionLocal, init_db
+from database import DocumentChunk, PendingDocument, SessionLocal, init_db
 from embeddings import embed_text
 
 
@@ -55,6 +55,12 @@ class IngestResponse(BaseModel):
     chunksStored: int
 
 
+# Field name matches the same camelCase-contract reasoning as
+# IngestResponse above.
+class SubmitResponse(BaseModel):
+    filesSubmitted: int
+
+
 # A FastAPI dependency - a reusable function any endpoint can require via
 # Depends(...). This is this service's ONLY authentication: it never
 # validates a JWT itself, it just checks that the caller holds the shared
@@ -82,6 +88,39 @@ def health_check():
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest, user_id: str = Depends(verify_internal_request)):
     return ChatResponse(reply=f"Echo (user {user_id}): {request.message}")
+
+
+# Stores the raw upload for review - no chunking or embedding here, that
+# only happens once a manager approves (see ARCHITECTURE.md's "Document
+# review before ingestion" section). This is what
+# frontend-angular's ingestion-submission-form will call once the
+# gateway proxy in front of it is updated to point here instead of
+# /documents/ingest.
+@app.post("/documents/submit", response_model=SubmitResponse)
+def submit_documents(
+    format: str = Form(...),
+    files: list[UploadFile] = File(...),
+    user_id: str = Depends(verify_internal_request),
+):
+    if format not in ("pdf", "csv"):
+        raise HTTPException(status_code=400, detail="format must be 'pdf' or 'csv'.")
+
+    session = SessionLocal()
+    try:
+        for file in files:
+            session.add(
+                PendingDocument(
+                    source_filename=file.filename,
+                    format=format,
+                    content=file.file.read(),
+                    submitted_by=user_id,
+                )
+            )
+        session.commit()
+    finally:
+        session.close()
+
+    return SubmitResponse(filesSubmitted=len(files))
 
 
 @app.post("/documents/ingest", response_model=IngestResponse)

@@ -5,14 +5,13 @@ import FormData from 'form-data';
 import { firstValueFrom } from 'rxjs';
 import { INTERNAL_API_KEY } from '../common/internal-api.constants';
 
-export interface IngestResponse {
-  filesIngested: number;
-  chunksStored: number;
+export interface SubmitResponse {
+  filesSubmitted: number;
 }
 
 // NOTE: hardcoded here for learning purposes, same caveat as every other
 // hardcoded config value in this project.
-const CHATBOT_INGEST_URL = 'http://localhost:8001/documents/ingest';
+const CHATBOT_SUBMIT_URL = 'http://localhost:8001/documents/submit';
 
 @Injectable()
 export class DocumentsService {
@@ -20,11 +19,11 @@ export class DocumentsService {
 
   constructor(private readonly httpService: HttpService) {}
 
-  async ingest(
+  async submit(
     format: string,
     files: Express.Multer.File[],
     userId: number,
-  ): Promise<IngestResponse> {
+  ): Promise<SubmitResponse> {
     // Re-packaging the files this gateway already received from Angular
     // into a NEW multipart request to forward to chatbot-rag-python.
     // This "form-data" package (Node's server-side multipart builder) is
@@ -38,7 +37,7 @@ export class DocumentsService {
 
     try {
       const response = await firstValueFrom(
-        this.httpService.post<IngestResponse>(CHATBOT_INGEST_URL, formData, {
+        this.httpService.post<SubmitResponse>(CHATBOT_SUBMIT_URL, formData, {
           headers: {
             // Unlike the browser's native FormData (which sets its own
             // Content-Type + boundary automatically), axios does NOT
@@ -57,9 +56,9 @@ export class DocumentsService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError;
-      this.logger.error(`Document ingestion call failed: ${axiosError.message}`);
+      this.logger.error(`Document submission call failed: ${axiosError.message}`);
       throw new HttpException(
-        'Document ingestion service is unavailable.',
+        'Document submission service is unavailable.',
         HttpStatus.BAD_GATEWAY,
       );
     }
