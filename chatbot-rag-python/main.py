@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from datetime import datetime
 
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
 from pydantic import BaseModel
@@ -61,6 +62,20 @@ class SubmitResponse(BaseModel):
     filesSubmitted: int
 
 
+# Metadata only - deliberately no `content` field here. This is what
+# populates ingestion-submitted-template's list; the raw bytes are only
+# ever fetched one document at a time (open/download), not as part of a
+# list response.
+class PendingDocumentSummary(BaseModel):
+    id: int
+    sourceFilename: str
+    format: str
+    status: str
+    submittedAt: datetime
+    reviewedAt: datetime | None
+    rejectionReason: str | None
+
+
 # A FastAPI dependency - a reusable function any endpoint can require via
 # Depends(...). This is this service's ONLY authentication: it never
 # validates a JWT itself, it just checks that the caller holds the shared
@@ -121,6 +136,36 @@ def submit_documents(
         session.close()
 
     return SubmitResponse(filesSubmitted=len(files))
+
+
+# Scoped to the caller's own submissions (submitted_by == user_id) - a
+# submitter sees their own history, not everyone else's. The reviewer's
+# equivalent (ingestion-review-template, all pending across every
+# submitter) is a separate endpoint - not built yet.
+@app.get("/documents/mine", response_model=list[PendingDocumentSummary])
+def list_my_documents(user_id: str = Depends(verify_internal_request)):
+    session = SessionLocal()
+    try:
+        documents = (
+            session.query(PendingDocument)
+            .filter(PendingDocument.submitted_by == user_id)
+            .order_by(PendingDocument.created_at.desc())
+            .all()
+        )
+        return [
+            PendingDocumentSummary(
+                id=doc.id,
+                sourceFilename=doc.source_filename,
+                format=doc.format,
+                status=doc.status,
+                submittedAt=doc.created_at,
+                reviewedAt=doc.reviewed_at,
+                rejectionReason=doc.rejection_reason,
+            )
+            for doc in documents
+        ]
+    finally:
+        session.close()
 
 
 @app.post("/documents/ingest", response_model=IngestResponse)

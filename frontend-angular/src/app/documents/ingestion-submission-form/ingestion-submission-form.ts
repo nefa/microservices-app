@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Select } from 'primeng/select';
 import { FileUpload, FileSelectEvent } from 'primeng/fileupload';
@@ -29,6 +29,10 @@ export class IngestionSubmissionForm {
   protected readonly isSubmitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
+
+  // Lets the hosting page refresh IngestionSubmittedTemplate's list
+  // without this component needing to know that sibling exists.
+  readonly submitted = output<void>();
 
   constructor(private readonly documents: Documents) {}
 
@@ -69,6 +73,7 @@ export class IngestionSubmissionForm {
       next: (response) => {
         this.isSubmitting.set(false);
         this.successMessage.set(`Submitted ${response.filesSubmitted} file(s) for review.`);
+        this.submitted.emit();
       },
       error: () => {
         this.isSubmitting.set(false);

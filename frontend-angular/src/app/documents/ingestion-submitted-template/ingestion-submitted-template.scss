@@ -1,0 +1,63 @@
+.card-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.card-header .hint {
+  font-size: 0.78rem;
+  color: var(--p-text-muted-color);
+}
+
+.empty-note {
+  padding: 1.5rem 0;
+  text-align: center;
+  color: var(--p-text-muted-color);
+  font-size: 0.9rem;
+}
+
+.submission-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.submission-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--p-content-border-color);
+}
+
+.submission-item:last-child {
+  border-bottom: none;
+}
+
+.submission-main {
+  min-width: 0;
+}
+
+.submission-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.submission-meta {
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+  color: var(--p-text-muted-color);
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.submission-reason {
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--p-red-500);
+}

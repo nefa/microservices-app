@@ -1,5 +1,13 @@
 <app-top-bar />
 
 <div class="ingest-page">
-  <app-ingestion-submission-form />
+  <div class="page-head">
+    <h1>Ingest Documents</h1>
+    <p>Submit files for review - a manager approves each one before it's added to the knowledge base.</p>
+  </div>
+
+  <div class="layout-grid">
+    <app-ingestion-submission-form (submitted)="onSubmitted()" />
+    <app-ingestion-submitted-template />
+  </div>
 </div>

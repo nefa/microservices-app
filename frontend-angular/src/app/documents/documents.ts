@@ -8,6 +8,18 @@ interface SubmitResponse {
   filesSubmitted: number;
 }
 
+export type DocumentReviewStatus = 'pending' | 'approved' | 'rejected';
+
+export interface PendingDocumentSummary {
+  id: number;
+  sourceFilename: string;
+  format: DocumentFormat;
+  status: DocumentReviewStatus;
+  submittedAt: string;
+  reviewedAt: string | null;
+  rejectionReason: string | null;
+}
+
 // NOTE: hardcoded here for learning purposes, same caveat as everywhere
 // else in this project - a real app would read this from environment.ts.
 const GATEWAY_URL = 'http://localhost:3000';
@@ -39,5 +51,11 @@ export class Documents {
     // would overwrite that with a header missing the boundary, breaking
     // the upload.
     return this.http.post<SubmitResponse>(`${GATEWAY_URL}/documents/submit`, formData);
+  }
+
+  // The submitter's own submission history - scoped server-side to the
+  // authenticated user, not filtered client-side.
+  listMine(): Observable<PendingDocumentSummary[]> {
+    return this.http.get<PendingDocumentSummary[]>(`${GATEWAY_URL}/documents/mine`);
   }
 }

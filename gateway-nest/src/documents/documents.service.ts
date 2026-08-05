@@ -9,9 +9,22 @@ export interface SubmitResponse {
   filesSubmitted: number;
 }
 
+// Mirrors chatbot-rag-python's PendingDocumentSummary - same
+// keep-in-sync-by-hand situation as INTERNAL_API_KEY.
+export interface PendingDocumentSummary {
+  id: number;
+  sourceFilename: string;
+  format: string;
+  status: string;
+  submittedAt: string;
+  reviewedAt: string | null;
+  rejectionReason: string | null;
+}
+
 // NOTE: hardcoded here for learning purposes, same caveat as every other
 // hardcoded config value in this project.
 const CHATBOT_SUBMIT_URL = 'http://localhost:8001/documents/submit';
+const CHATBOT_MINE_URL = 'http://localhost:8001/documents/mine';
 
 @Injectable()
 export class DocumentsService {
@@ -57,6 +70,27 @@ export class DocumentsService {
     } catch (error) {
       const axiosError = error as AxiosError;
       this.logger.error(`Document submission call failed: ${axiosError.message}`);
+      throw new HttpException(
+        'Document submission service is unavailable.',
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
+  }
+
+  async listMine(userId: number): Promise<PendingDocumentSummary[]> {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<PendingDocumentSummary[]>(CHATBOT_MINE_URL, {
+          headers: {
+            'X-Internal-Api-Key': INTERNAL_API_KEY,
+            'X-User-Id': userId.toString(),
+          },
+        }),
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      this.logger.error(`Document list call failed: ${axiosError.message}`);
       throw new HttpException(
         'Document submission service is unavailable.',
         HttpStatus.BAD_GATEWAY,

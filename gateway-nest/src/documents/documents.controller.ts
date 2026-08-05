@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import { memoryStorage } from 'multer';
@@ -31,5 +31,10 @@ export class DocumentsController {
     @Req() request: AuthenticatedRequest,
   ) {
     return this.documentsService.submit(format, files, request.user.userId);
+  }
+
+  @Get('mine')
+  async listMine(@Req() request: AuthenticatedRequest) {
+    return this.documentsService.listMine(request.user.userId);
   }
 }

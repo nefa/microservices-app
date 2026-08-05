@@ -1,16 +1,34 @@
 .ingest-page {
-  display: flex;
-  justify-content: center;
-  padding-top: 4rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
 }
 
-// Targets the child's host element (not its internal p-card) - Angular's
-// emulated style encapsulation only lets a parent reach elements it
-// wrote directly in its own template, and app-ingestion-submission-form
-// is that element here. Width is a placeholder until the two-column
-// layout (this + ingestion-submitted-template) replaces this centered
-// single-card page.
-.ingest-page app-ingestion-submission-form {
-  display: block;
-  width: 420px;
+.page-head {
+  margin-bottom: 1.5rem;
+}
+
+.page-head h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.375rem;
+  font-weight: 650;
+}
+
+.page-head p {
+  margin: 0;
+  color: var(--p-text-muted-color);
+  font-size: 0.9rem;
+}
+
+.layout-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 760px) {
+  .layout-grid {
+    grid-template-columns: 1fr;
+  }
 }

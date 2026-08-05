@@ -1,0 +1,38 @@
+<p-card>
+  <ng-template #header>
+    <div class="card-header">
+      <span>Your submissions</span>
+      @if (!isLoading() && submissions().length > 0) {
+        <span class="hint">{{ submissions().length }} total</span>
+      }
+    </div>
+  </ng-template>
+
+  @if (isLoading()) {
+    <p class="empty-note">Loading...</p>
+  } @else if (errorMessage()) {
+    <p-message severity="error">{{ errorMessage() }}</p-message>
+  } @else if (submissions().length === 0) {
+    <p class="empty-note">You haven't submitted any documents yet.</p>
+  } @else {
+    <ul class="submission-list">
+      @for (doc of submissions(); track doc.id) {
+        <li class="submission-item">
+          <div class="submission-main">
+            <div class="submission-name">{{ doc.sourceFilename }}</div>
+            <div class="submission-meta">
+              <span>Submitted {{ doc.submittedAt | date: 'mediumDate' }}</span>
+              @if (doc.reviewedAt) {
+                <span>Reviewed {{ doc.reviewedAt | date: 'mediumDate' }}</span>
+              }
+            </div>
+            @if (doc.rejectionReason) {
+              <div class="submission-reason">{{ doc.rejectionReason }}</div>
+            }
+          </div>
+          <p-tag [value]="statusTag(doc.status).label" [severity]="statusTag(doc.status).severity" />
+        </li>
+      }
+    </ul>
+  }
+</p-card>
