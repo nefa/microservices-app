@@ -1,0 +1,70 @@
+@if (submitted()) {
+  <section class="success">
+    <h2>You're registered</h2>
+    <p>Check your email to confirm your account before signing in. Here's what was submitted:</p>
+    <app-review-step [model]="model()" [defaultFeatures]="defaultFeatures()" [editable]="false" />
+  </section>
+} @else {
+  <form (ngSubmit)="submitRegistration()">
+    <ol class="steps" aria-label="Registration progress">
+      <li [class.active]="step() === 1" [class.done]="step() > 1">1. Account</li>
+      <li [class.active]="step() === 2" [class.done]="step() > 2">2. Professional info</li>
+      <li [class.active]="step() === 3" [class.done]="step() > 3">3. Personal info</li>
+      <li [class.active]="step() === 4">4. Review</li>
+    </ol>
+
+    @switch (step()) {
+      @case (1) {
+        <app-account-step
+          [emailField]="registerForm.email"
+          [passwordField]="registerForm.password"
+          [confirmPasswordField]="registerForm.confirmPassword"
+        />
+      }
+      @case (2) {
+        <app-professional-step
+          [jobFunctionField]="registerForm.jobFunction"
+          [roleField]="registerForm.role"
+          [requestedFeaturesField]="registerForm.requestedFeatures"
+        />
+      }
+      @case (3) {
+        <app-personal-step
+          [addressLine1Field]="registerForm.addressLine1"
+          [addressLine2Field]="registerForm.addressLine2"
+          [cityField]="registerForm.city"
+          [postalCodeField]="registerForm.postalCode"
+          [countryField]="registerForm.country"
+          [emergencyContactNameField]="registerForm.emergencyContactName"
+          [emergencyContactPhoneField]="registerForm.emergencyContactPhone"
+          [emergencyContactRelationshipField]="registerForm.emergencyContactRelationship"
+        />
+      }
+      @case (4) {
+        <app-review-step
+          [model]="model()"
+          [defaultFeatures]="defaultFeatures()"
+          [editable]="true"
+          (goToStep)="goToStep($event)"
+        />
+      }
+    }
+
+    @if (serverError()) {
+      <p class="form-error" role="alert">{{ serverError() }}</p>
+    }
+
+    <div class="actions">
+      @if (step() > 1) {
+        <button type="button" (click)="back()">Back</button>
+      }
+      @if (step() < 4) {
+        <button type="button" (click)="next()" [disabled]="!currentStepValid()">Next</button>
+      } @else {
+        <button type="submit" [disabled]="!registerForm().valid() || registerForm().submitting()">
+          {{ registerForm().submitting() ? 'Submitting…' : 'Create account' }}
+        </button>
+      }
+    </div>
+  </form>
+}
