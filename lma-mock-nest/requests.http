@@ -1,0 +1,110 @@
+### lma-mock-nest — manual requests (VS Code "REST Client" extension)
+#
+# Open this file with the REST Client extension installed and click
+# "Send Request" above any block below (each block is separated by
+# "###"). Service must be running first - see README.md's "Run" section:
+#
+#   cd lma-mock-nest && npm run start:dev
+#
+# Mirrors the exact contract register-form-angular's lma-api.ts /
+# registration-model.ts assume - see README.md's "Endpoints" section for
+# the full status/response table.
+
+@baseUrl = http://localhost:43022
+
+
+### Health check - confirms the service booted
+GET {{baseUrl}}/health
+
+
+### List everyone registered so far - the "check for a new subscriber"
+# endpoint. No equivalent to opening pgAdmin here, since there's no
+# database - this is it. passwordHash is deliberately never included.
+# Run this again after the "Register - success" block below to see the
+# new entry show up.
+GET {{baseUrl}}/registrations
+
+
+### Email availability - unregistered address -> { available: true }
+GET {{baseUrl}}/registrations/email-availability?email=newuser@example.com
+
+
+### Email availability - seeded demo account -> { available: false }
+# alice@example.com / bob@example.com are seeded on every boot (see
+# README.md's "Seeded users").
+GET {{baseUrl}}/registrations/email-availability?email=alice@example.com
+
+
+### Register - success -> 201, empty body
+# Re-running this exact request a second time will instead hit the
+# EMAIL_TAKEN case below, since the email is now taken in-memory.
+POST {{baseUrl}}/registrations
+Content-Type: application/json
+
+{
+  "email": "newuser@example.com",
+  "password": "Password123!",
+  "confirmPassword": "Password123!",
+  "jobFunction": "Engineer",
+  "role": "engineer",
+  "requestedFeatures": [],
+  "defaultFeatures": ["chat", "document-submit"],
+  "addressLine1": "1 Main St",
+  "addressLine2": "",
+  "city": "Springfield",
+  "postalCode": "12345",
+  "country": "USA",
+  "emergencyContactName": "Jane Doe",
+  "emergencyContactPhone": "555-0100",
+  "emergencyContactRelationship": "Spouse"
+}
+
+
+### Register - duplicate email -> 409, X-Error-Code: EMAIL_TAKEN
+# Uses a seeded account so this fails every run, no ordering dependency
+# on the "success" request above.
+POST {{baseUrl}}/registrations
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "Password123!",
+  "confirmPassword": "Password123!",
+  "jobFunction": "Engineer",
+  "role": "engineer",
+  "requestedFeatures": [],
+  "defaultFeatures": ["chat", "document-submit"],
+  "addressLine1": "1 Main St",
+  "addressLine2": "",
+  "city": "Springfield",
+  "postalCode": "12345",
+  "country": "USA",
+  "emergencyContactName": "Jane Doe",
+  "emergencyContactPhone": "555-0100",
+  "emergencyContactRelationship": "Spouse"
+}
+
+
+### Register - weak password -> 400, X-Error-Code: PASSWORD_POLICY
+# Password policy is checked before the email conflict (see README.md),
+# so this fails on PASSWORD_POLICY even though the email is also unused.
+POST {{baseUrl}}/registrations
+Content-Type: application/json
+
+{
+  "email": "weakpassword@example.com",
+  "password": "weak",
+  "confirmPassword": "weak",
+  "jobFunction": "Engineer",
+  "role": "engineer",
+  "requestedFeatures": [],
+  "defaultFeatures": ["chat", "document-submit"],
+  "addressLine1": "1 Main St",
+  "addressLine2": "",
+  "city": "Springfield",
+  "postalCode": "12345",
+  "country": "USA",
+  "emergencyContactName": "Jane Doe",
+  "emergencyContactPhone": "555-0100",
+  "emergencyContactRelationship": "Spouse"
+}
