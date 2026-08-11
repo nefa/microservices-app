@@ -178,6 +178,8 @@ Decisions deliberately deferred until there's a real need to make them:
 | `frontend-angular` | Angular + PrimeNG UI | In progress |
 | `gateway-nest` | Auth, session, REST proxy to Python services | In progress |
 | `chatbot-rag-python` | RAG retrieval over ingested documents (pgvector) | In progress |
+| `register-form-angular` | Standalone Angular SPA — multi-step registration, talks to LMA directly (see `PROJECT-Structure-diagram.md` section 3) | In progress |
+| `lma-mock-nest` | NestJS — local in-memory simulator for the 3rd-party LMA's registration endpoints, standing in until the real LMA sandbox is wired up | In progress |
 | `voice-recognition-python` | Voice recognition | Planned |
 | `speech-to-text-node` | Speech-to-text | Planned |
 | `graphql-bff` | Node + Apollo aggregation layer for cross-service reads | Planned |
