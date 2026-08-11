@@ -1,0 +1,57 @@
+### gateway-nest — manual requests (VS Code "REST Client" extension)
+#
+# Demonstrates the same "log in once, reuse the token everywhere" flow
+# Postman gives you, but without writing a test script to stash it in an
+# environment variable: REST Client lets any later request reference an
+# earlier NAMED request's response directly via
+# {{requestName.response.body.$.jsonPath}}.
+#
+# Service must be running first - see the root INSTRUCTIONS.md's
+# "First-time setup" step 1:
+#
+#   cd gateway-nest && docker compose up -d && npm run start:dev
+#
+# Click "Send Request" above the "login" block below FIRST - the blocks
+# after it have nothing to substitute until that one has actually run at
+# least once.
+
+@baseUrl = http://localhost:3000
+
+
+### Login - the "# @name login" line is what makes this request
+# referenceable below. Response shape: { user: {...}, token: "..." }
+# (see src/auth/auth.service.ts's LoginResult) - alice/bob are the demo
+# accounts from "npm run seed" (see INSTRUCTIONS.md's "Demo login").
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "Password123!"
+}
+
+
+### Send a chat message, reusing the JWT from "login" above - no
+# copy-pasting the token by hand. AuthGuard('jwt') on ChatController
+# rejects this with 401 if the header is missing/invalid; a 502 instead
+# means auth passed but chatbot-rag-python isn't running (see
+# INSTRUCTIONS.md's troubleshooting table).
+POST {{baseUrl}}/chat
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.$.token}}
+
+{
+  "message": "Hello from REST Client"
+}
+
+
+### Confirm the 401 case - same request, deliberately no Authorization
+# header, to show AuthGuard('jwt') actually rejects unauthenticated
+# requests rather than the endpoint being open.
+POST {{baseUrl}}/chat
+Content-Type: application/json
+
+{
+  "message": "This should be rejected"
+}

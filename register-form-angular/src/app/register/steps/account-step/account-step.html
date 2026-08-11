@@ -1,0 +1,29 @@
+<h2>Account</h2>
+
+<div class="field">
+  <label for="email">Email</label>
+  <input id="email" type="email" [formField]="emailField()" autocomplete="email" />
+  @if (emailField()().pending()) {
+    <p class="hint">Checking availability…</p>
+  }
+  @for (error of emailField()().errors(); track error.kind) {
+    <p class="error">{{ error.message }}</p>
+  }
+</div>
+
+<div class="field">
+  <label for="password">Password</label>
+  <input id="password" type="password" [formField]="passwordField()" autocomplete="new-password" />
+  <p class="hint">At least 8 characters, with at least one special character.</p>
+  @for (error of passwordField()().errors(); track error.kind) {
+    <p class="error">{{ error.message }}</p>
+  }
+</div>
+
+<div class="field">
+  <label for="confirmPassword">Confirm password</label>
+  <input id="confirmPassword" type="password" [formField]="confirmPasswordField()" autocomplete="new-password" />
+  @for (error of confirmPasswordField()().errors(); track error.kind) {
+    <p class="error">{{ error.message }}</p>
+  }
+</div>

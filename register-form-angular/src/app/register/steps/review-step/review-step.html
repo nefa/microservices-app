@@ -1,0 +1,76 @@
+@if (editable()) {
+  <h2>Review your information</h2>
+  <p>Check everything below before creating the account.</p>
+}
+
+<section class="review-section">
+  <h3>
+    Account
+    @if (editable()) {
+      <button type="button" class="edit-link" (click)="goToStep.emit(1)">Edit</button>
+    }
+  </h3>
+  <dl>
+    <dt>Email</dt>
+    <dd>{{ model().email }}</dd>
+    <dt>Password</dt>
+    <dd>{{ maskedPassword }}</dd>
+  </dl>
+</section>
+
+<section class="review-section">
+  <h3>
+    Professional info
+    @if (editable()) {
+      <button type="button" class="edit-link" (click)="goToStep.emit(2)">Edit</button>
+    }
+  </h3>
+  <dl>
+    <dt>Function</dt>
+    <dd>{{ model().jobFunction }}</dd>
+    <dt>Role</dt>
+    <dd>{{ model().role }}</dd>
+    @if (defaultFeatures().length > 0) {
+      <dt>Included with this role by default</dt>
+      <dd>{{ defaultFeatures().join(', ') }}</dd>
+    }
+    @if (requestedFeatureLabels().length > 0) {
+      <dt>Requested (needs approval)</dt>
+      <dd>{{ requestedFeatureLabels().join(', ') }}</dd>
+    }
+  </dl>
+</section>
+
+<section class="review-section">
+  <h3>
+    Personal info
+    @if (editable()) {
+      <button type="button" class="edit-link" (click)="goToStep.emit(3)">Edit</button>
+    }
+  </h3>
+  <dl>
+    <dt>Address</dt>
+    <dd>
+      {{ model().addressLine1 }}
+      @if (model().addressLine2) {
+        <br />
+        {{ model().addressLine2 }}
+      }
+      <br />
+      {{ model().city }}, {{ model().postalCode }}
+      <br />
+      {{ model().country }}
+    </dd>
+    <dt>Emergency contact</dt>
+    <dd>
+      {{ model().emergencyContactName }} — {{ model().emergencyContactPhone }}
+      @if (model().emergencyContactRelationship) {
+        ({{ model().emergencyContactRelationship }})
+      }
+    </dd>
+  </dl>
+</section>
+
+@if (editable()) {
+  <p class="confirm-prompt">Does everything look correct?</p>
+}

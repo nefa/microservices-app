@@ -1,0 +1,66 @@
+<h2>Personal info</h2>
+
+<div class="field">
+  <label for="addressLine1">Address</label>
+  <input id="addressLine1" type="text" [formField]="addressLine1Field()" autocomplete="address-line1" />
+  @for (error of addressLine1Field()().errors(); track error.kind) {
+    <p class="error">{{ error.message }}</p>
+  }
+</div>
+
+<div class="field">
+  <label for="addressLine2">Address line 2 (optional)</label>
+  <input id="addressLine2" type="text" [formField]="addressLine2Field()" autocomplete="address-line2" />
+</div>
+
+<div class="field">
+  <label for="city">City</label>
+  <input id="city" type="text" [formField]="cityField()" autocomplete="address-level2" />
+  @for (error of cityField()().errors(); track error.kind) {
+    <p class="error">{{ error.message }}</p>
+  }
+</div>
+
+<div class="field">
+  <label for="postalCode">Postal code</label>
+  <input id="postalCode" type="text" [formField]="postalCodeField()" autocomplete="postal-code" />
+  @for (error of postalCodeField()().errors(); track error.kind) {
+    <p class="error">{{ error.message }}</p>
+  }
+</div>
+
+<div class="field">
+  <label for="country">Country</label>
+  <input id="country" type="text" [formField]="countryField()" autocomplete="country-name" />
+  @for (error of countryField()().errors(); track error.kind) {
+    <p class="error">{{ error.message }}</p>
+  }
+</div>
+
+<h3>Emergency contact</h3>
+
+<div class="field">
+  <label for="emergencyContactName">Name</label>
+  <input id="emergencyContactName" type="text" [formField]="emergencyContactNameField()" />
+  @for (error of emergencyContactNameField()().errors(); track error.kind) {
+    <p class="error">{{ error.message }}</p>
+  }
+</div>
+
+<div class="field">
+  <label for="emergencyContactPhone">Phone</label>
+  <input id="emergencyContactPhone" type="tel" [formField]="emergencyContactPhoneField()" autocomplete="tel" />
+  @for (error of emergencyContactPhoneField()().errors(); track error.kind) {
+    <p class="error">{{ error.message }}</p>
+  }
+</div>
+
+<div class="field">
+  <label for="emergencyContactRelationship">Relationship (optional)</label>
+  <input
+    id="emergencyContactRelationship"
+    type="text"
+    [formField]="emergencyContactRelationshipField()"
+    placeholder="e.g. spouse, parent, sibling"
+  />
+</div>

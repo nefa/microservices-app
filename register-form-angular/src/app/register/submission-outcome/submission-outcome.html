@@ -1,0 +1,27 @@
+<section class="outcome" [class.success]="kind() === 'success'" [class.error]="kind() === 'error'">
+  <div class="icon-circle" aria-hidden="true">
+    @if (kind() === 'success') {
+      <svg viewBox="0 0 24 24" class="icon check">
+        <path d="M20 6 9 17l-5-5" />
+      </svg>
+    } @else {
+      <svg viewBox="0 0 24 24" class="icon cross">
+        <path d="M18 6 6 18" />
+        <path d="M6 6l12 12" />
+      </svg>
+    }
+  </div>
+
+  <h2>{{ heading() }}</h2>
+
+  @if (message()) {
+    <p class="outcome-message" role="alert">{{ message() }}</p>
+  }
+
+  <ng-content />
+
+  <p class="redirect-note">
+    Returning to the start in {{ secondsRemaining() }}s…
+    <button type="button" class="link-button" (click)="startOver.emit()">Start over now</button>
+  </p>
+</section>

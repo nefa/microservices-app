@@ -1,0 +1,61 @@
+.outcome {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.icon-circle {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 1.5rem;
+  border-radius: 50%;
+  // Blue circle for both outcomes, deliberately - only the icon inside
+  // it changes. Matches the "steps" progress indicator's blue accent
+  // elsewhere in this form (see register-form.scss).
+  background: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon {
+  width: 36px;
+  height: 36px;
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon.check {
+  stroke: #22c55e;
+}
+
+.icon.cross {
+  stroke: #ef4444;
+}
+
+h2 {
+  margin: 0 0 0.5rem;
+}
+
+.outcome-message {
+  color: #555;
+  margin: 0 0 1rem;
+}
+
+.redirect-note {
+  margin-block-start: 2rem;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #2563eb;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  text-decoration: underline;
+  margin-inline-start: 0.35rem;
+}

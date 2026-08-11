@@ -1,0 +1,94 @@
+/* Global styles. Shared form field/error styling lives here rather than
+   duplicated per step component, since every step (account, professional,
+   personal) uses the same field/label/error shape. */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #1a1a1a;
+  background: #fafafa;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-block-end: 1.25rem;
+
+  label {
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  input,
+  select,
+  textarea {
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: inherit;
+
+    &:focus-visible {
+      outline: 2px solid #2563eb;
+      outline-offset: 1px;
+    }
+
+    &:invalid:not(:placeholder-shown) {
+      /* Native browser validation is disabled by the forms library; this
+         is a no-op safeguard, not the source of truth for validity. */
+      border-color: #ccc;
+    }
+  }
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #c1121f;
+}
+
+.form-error {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  background: #fdecea;
+  color: #c1121f;
+  font-size: 0.9rem;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-block-end: 1.25rem;
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 400;
+    font-size: 0.95rem;
+  }
+}
+
+.label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.feature-list {
+  margin: 0.25rem 0 0;
+  padding-inline-start: 1.25rem;
+  font-size: 0.9rem;
+  color: #444;
+}

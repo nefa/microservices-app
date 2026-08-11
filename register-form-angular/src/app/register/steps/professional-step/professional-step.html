@@ -1,0 +1,47 @@
+<h2>Professional info</h2>
+
+<div class="field">
+  <label for="jobFunction">Function</label>
+  <input id="jobFunction" type="text" [formField]="jobFunctionField()" placeholder="e.g. Backend Engineer" />
+  @for (error of jobFunctionField()().errors(); track error.kind) {
+    <p class="error">{{ error.message }}</p>
+  }
+</div>
+
+<div class="field">
+  <label for="role">Role</label>
+  <select id="role" [formField]="roleField()">
+    <option value="" disabled selected>Select a role…</option>
+    @for (role of roles; track role) {
+      <option [value]="role">{{ role }}</option>
+    }
+  </select>
+  @for (error of roleField()().errors(); track error.kind) {
+    <p class="error">{{ error.message }}</p>
+  }
+</div>
+
+@if (defaultFeatures().length > 0) {
+  <div class="field">
+    <span class="label">Included with this role by default</span>
+    <ul class="feature-list">
+      @for (feature of defaultFeatures(); track feature) {
+        <li>{{ feature }}</li>
+      }
+    </ul>
+  </div>
+}
+
+<div class="checkbox-group">
+  <span class="label">Request additional access (needs approval later)</span>
+  @for (feature of requestableFeatures; track feature.key) {
+    <label>
+      <input
+        type="checkbox"
+        [checked]="isRequested(feature.key)"
+        (change)="toggleRequested(feature.key, $any($event.target).checked)"
+      />
+      {{ feature.label }}
+    </label>
+  }
+</div>
