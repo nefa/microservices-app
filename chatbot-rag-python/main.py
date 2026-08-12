@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
 from pydantic import BaseModel
 
+from chat_router import ChatResponse, handle_structured_query, is_structured_query
 from chunking import parse_csv, parse_pdf
 from database import DocumentChunk, PendingDocument, SessionLocal, init_db
 from embeddings import embed_text
@@ -42,10 +43,6 @@ class ChatRequest(BaseModel):
     message: str
 
 
-class ChatResponse(BaseModel):
-    reply: str
-
-
 # Field names are camelCase (not the usual Python snake_case convention)
 # on purpose - this is a cross-language API contract, and
 # frontend-angular's Documents.ingest() already expects exactly
@@ -81,12 +78,21 @@ def health_check():
     return {"status": "ok"}
 
 
-# No RAG pipeline or vector database wired up yet - this just proves the
-# endpoint is reachable and the request/response shape works end-to-end
-# (including through the gateway's auth) - real retrieval logic replaces
-# this echo later.
+# Structured queries (see chat_router.py) hit document_chunk directly -
+# "give me the latest entries" is a plain SQL question, not a similarity
+# search. Anything that doesn't match a structured-query keyword still
+# falls back to the echo for now - semantic search (embedding the
+# question, pgvector cosine similarity) isn't wired up yet, and silently
+# claiming it works would be worse than an obvious echo.
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest, user_id: str = Depends(verify_internal_request)):
+    if is_structured_query(request.message):
+        session = SessionLocal()
+        try:
+            return handle_structured_query(request.message, user_id, session)
+        finally:
+            session.close()
+
     return ChatResponse(reply=f"Echo (user {user_id}): {request.message}")
 
 

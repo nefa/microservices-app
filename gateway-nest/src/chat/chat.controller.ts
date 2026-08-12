@@ -32,7 +32,8 @@ export class ChatController {
   @Post()
   @HttpCode(HttpStatus.OK)
   async chat(@Body() dto: ChatMessageDto, @Req() request: AuthenticatedRequest) {
-    const reply = await this.chatService.sendMessage(dto.message, request.user.userId);
-    return { reply };
+    // Whole response passed straight through - see ChatService.sendMessage's
+    // comment for why this controller no longer narrows it to { reply }.
+    return this.chatService.sendMessage(dto.message, request.user.userId);
   }
 }

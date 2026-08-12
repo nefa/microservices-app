@@ -4,8 +4,29 @@ import { AxiosError } from 'axios';
 import { firstValueFrom } from 'rxjs';
 import { INTERNAL_API_KEY } from '../common/internal-api.constants';
 
-interface ChatbotReply {
+// Mirrors chatbot-rag-python's ChatResponse (chat_router.py) field for
+// field - camelCase both sides, but this is the same "no compiler check
+// across the language boundary" situation as INTERNAL_API_KEY: has to be
+// kept in sync by hand. `type`/`data` only grow richer (chart,
+// comparison, ...) as chatbot-rag-python adds handlers for them - see
+// ARCHITECTURE.md's "Chat responses" section.
+export type ChatResponseType = 'text' | 'table';
+
+export interface ChatTableData {
+  columns: string[];
+  rows: Record<string, unknown>[];
+}
+
+export interface ChatSuggestion {
+  label: string;
+  type: string;
+}
+
+export interface ChatbotResponse {
   reply: string;
+  type: ChatResponseType;
+  data: ChatTableData | null;
+  suggestions: ChatSuggestion[];
 }
 
 // NOTE: hardcoded here for learning purposes, same caveat as every other
@@ -21,10 +42,10 @@ export class ChatService {
 
   constructor(private readonly httpService: HttpService) {}
 
-  async sendMessage(message: string, userId: number): Promise<string> {
+  async sendMessage(message: string, userId: number): Promise<ChatbotResponse> {
     try {
       const response = await firstValueFrom(
-        this.httpService.post<ChatbotReply>(
+        this.httpService.post<ChatbotResponse>(
           CHATBOT_SERVICE_URL,
           { message },
           {
@@ -42,7 +63,13 @@ export class ChatService {
           },
         ),
       );
-      return response.data.reply;
+      // Pass the whole envelope through as-is - this gateway has no
+      // opinion on `type`/`data`/`suggestions`, it's just the trusted
+      // relay between the JWT world (frontend-angular) and the
+      // internal-key world (chatbot-rag-python). Narrowing this down to
+      // { reply } (the old behavior) is exactly what made those fields
+      // unreachable by any real client.
+      return response.data;
     } catch (error) {
       const axiosError = error as AxiosError;
       this.logger.error(`Chatbot service call failed: ${axiosError.message}`);
