@@ -1,20 +1,20 @@
 import { Component, ElementRef, afterRenderEffect, inject, signal, viewChild } from '@angular/core';
 import { TopBar } from '../../layout/top-bar/top-bar';
 import { ChatInput } from '../chat-input/chat-input';
-import { Chat, ChatResponseType, ChatSuggestion, ChatTableData } from '../chat';
+import { Chat, ChatListData, ChatResponseType, ChatSuggestion, ChatTableData } from '../chat';
 
 // Text-only rendering for now, even though the service already carries
 // type/data/suggestions - table/list renderers are the next step, once
-// this baseline (send a message, see a reply, real data from
-// chatbot-rag-python's structured-query path) is working end to end.
-// message.type/data/suggestions are captured anyway so nothing needs to
-// be re-fetched when that rendering step lands.
+// this baseline (send a message, see a reply, real data from both
+// chatbot-rag-python's structured-query and semantic-search paths) is
+// working end to end. message.type/data/suggestions are captured anyway
+// so nothing needs to be re-fetched when that rendering step lands.
 interface ChatMessage {
   id: string;
   role: 'user' | 'bot';
   text: string;
   type?: ChatResponseType;
-  data?: ChatTableData | null;
+  data?: ChatTableData | ChatListData | null;
   suggestions?: ChatSuggestion[];
 }
 

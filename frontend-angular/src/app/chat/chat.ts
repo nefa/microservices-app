@@ -10,13 +10,27 @@ import { Observable } from 'rxjs';
 //
 // Narrower than ARCHITECTURE.md's full text|table|chart|list|comparison
 // union on purpose - chatbot-rag-python only has handlers for
-// text/table so far, and this app only has a renderer for text so far
-// (see ChatPage). Widen both together as real handlers/renderers land.
-export type ChatResponseType = 'text' | 'table';
+// text/table/list so far. The type contract is kept accurate here even
+// though ChatPage only renders `text` for now (see its comment) - the
+// data is already flowing through, only the rendering step is pending.
+export type ChatResponseType = 'text' | 'table' | 'list';
 
 export interface ChatTableData {
   columns: string[];
   rows: Record<string, unknown>[];
+}
+
+// Semantic search's result shape - one item per matching document_chunk
+// (title = source filename, snippet = a truncated excerpt), not a
+// generated answer. See chatbot-rag-python's chat_router.py module
+// docstring for why: retrieval only, no LLM synthesis yet.
+export interface ChatListItem {
+  title: string;
+  snippet: string;
+}
+
+export interface ChatListData {
+  items: ChatListItem[];
 }
 
 export interface ChatSuggestion {
@@ -27,7 +41,7 @@ export interface ChatSuggestion {
 export interface ChatResponse {
   reply: string;
   type: ChatResponseType;
-  data: ChatTableData | null;
+  data: ChatTableData | ChatListData | null;
   suggestions: ChatSuggestion[];
 }
 
