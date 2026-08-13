@@ -1,0 +1,19 @@
+<app-top-bar />
+
+<div class="chat-page">
+  <div class="message-list" #messageList>
+    @if (messages().length === 0) {
+      <p class="empty-state">
+        Ask something like "how many documents do I have?" or "list my recent documents".
+      </p>
+    }
+
+    @for (message of messages(); track message.id) {
+      <div class="message" [class.message-user]="message.role === 'user'" [class.message-bot]="message.role === 'bot'">
+        <p>{{ message.text }}</p>
+      </div>
+    }
+  </div>
+
+  <app-chat-input [disabled]="isSending()" (send)="onSend($event)" />
+</div>

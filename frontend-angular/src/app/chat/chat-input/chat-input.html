@@ -1,0 +1,13 @@
+<form class="chat-input" (ngSubmit)="onSubmit()">
+  <input
+    pInputText
+    type="text"
+    name="message"
+    autocomplete="off"
+    placeholder="Ask about your ingested documents…"
+    [ngModel]="text()"
+    (ngModelChange)="text.set($event)"
+    [disabled]="disabled()"
+  />
+  <p-button type="submit" icon="pi pi-send" [loading]="disabled()" [disabled]="disabled() || !text().trim()" />
+</form>
