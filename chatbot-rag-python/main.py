@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
 from pydantic import BaseModel
 
-from chat_router import ChatResponse, handle_structured_query, is_structured_query
+from chat_router import ChatResponse, handle_semantic_query, handle_structured_query, is_structured_query
 from chunking import parse_csv, parse_pdf
 from database import DocumentChunk, PendingDocument, SessionLocal, init_db
 from embeddings import embed_text
@@ -80,20 +80,20 @@ def health_check():
 
 # Structured queries (see chat_router.py) hit document_chunk directly -
 # "give me the latest entries" is a plain SQL question, not a similarity
-# search. Anything that doesn't match a structured-query keyword still
-# falls back to the echo for now - semantic search (embedding the
-# question, pgvector cosine similarity) isn't wired up yet, and silently
-# claiming it works would be worse than an obvious echo.
+# search. Everything else now goes through semantic search (embed the
+# question, pgvector cosine similarity against document_chunk) instead
+# of the old echo - see chat_router.py's module docstring for why that's
+# retrieval only, no generation/LLM involved.
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest, user_id: str = Depends(verify_internal_request)):
-    if is_structured_query(request.message):
-        session = SessionLocal()
-        try:
+    session = SessionLocal()
+    try:
+        if is_structured_query(request.message):
             return handle_structured_query(request.message, user_id, session)
-        finally:
-            session.close()
 
-    return ChatResponse(reply=f"Echo (user {user_id}): {request.message}")
+        return handle_semantic_query(request.message, user_id, session)
+    finally:
+        session.close()
 
 
 # Stores the raw upload for review - no chunking or embedding here, that

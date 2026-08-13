@@ -14,8 +14,11 @@ a real DB" check.
 Run with: venv/bin/pytest -v
 """
 
+import pytest
 from fastapi.testclient import TestClient
 
+from database import DocumentChunk, SessionLocal
+from embeddings import embed_text
 from main import INTERNAL_API_KEY, app
 
 client = TestClient(app)
@@ -77,14 +80,55 @@ def test_chat_structured_recent_documents_query_for_a_user_with_no_documents():
     assert body["data"] is None
 
 
-def test_chat_falls_back_to_echo_for_non_structured_messages():
+@pytest.fixture
+def seeded_chunk():
+    # Real row, real embedding (the actual sentence-transformers model,
+    # same as ingestion would produce) - not a mock. Torn down
+    # unconditionally so this test's data can't leak into any other
+    # test's "0 documents" assertions, regardless of run order.
+    content = "Acme Corp signed a new supply contract in March 2026."
+    session = SessionLocal()
+    chunk = DocumentChunk(
+        source_filename="acme-notes.pdf",
+        format="pdf",
+        user_id=TEST_USER_ID,
+        content=content,
+        embedding=embed_text(content),
+    )
+    session.add(chunk)
+    session.commit()
+    try:
+        yield chunk
+    finally:
+        session.query(DocumentChunk).filter(DocumentChunk.user_id == TEST_USER_ID).delete()
+        session.commit()
+        session.close()
+
+
+def test_chat_semantic_query_finds_a_matching_chunk(seeded_chunk):
+    response = _chat("what do we know about acme corp's contracts?")
+    assert response.status_code == 200
+
+    body = response.json()
+    assert body["type"] == "list"
+    assert body["reply"] == "Found 1 relevant excerpt(s)."
+    assert body["data"]["items"] == [
+        {"title": "acme-notes.pdf", "snippet": "Acme Corp signed a new supply contract in March 2026."}
+    ]
+
+
+def test_chat_semantic_query_for_a_user_with_no_documents():
     # No structured keyword ("latest"/"recent"/"list"/"how many"/"count")
-    # in this message, so it takes the non-structured branch - semantic
-    # search isn't wired up yet (see main.py's comment), so this is
-    # still the echo fallback.
+    # in this message, so it takes the semantic (pgvector similarity)
+    # branch. TEST_USER_ID has no document_chunk rows, so this hits
+    # handle_semantic_query's empty-state reply rather than actually
+    # running a similarity search - still exercises the real routing
+    # decision and the real (embedding-model-backed) code path up to
+    # that point, just with nothing in the DB to match against.
     response = _chat("what do you know about acme corp")
     assert response.status_code == 200
 
     body = response.json()
     assert body["type"] == "text"
-    assert body["reply"] == f"Echo (user {TEST_USER_ID}): what do you know about acme corp"
+    assert body["reply"] == "You haven't ingested any documents yet, so there's nothing to search."
+    assert body["data"] is None
