@@ -1,0 +1,52 @@
+.chat-page {
+  display: flex;
+  flex-direction: column;
+  // 100dvh instead of 100vh - accounts for mobile browser chrome the
+  // same way svh/dvh units are meant to, so the input bar doesn't end up
+  // pushed off-screen behind an address bar. 65px is top-bar.scss's
+  // approximate rendered height (0.75rem padding + content).
+  height: calc(100dvh - 65px);
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.message-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-bottom: 1rem;
+}
+
+.empty-state {
+  margin: auto;
+  color: var(--p-text-muted-color, #6b7280);
+  text-align: center;
+}
+
+.message {
+  max-width: 75%;
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.75rem;
+  line-height: 1.4;
+
+  p {
+    margin: 0;
+    white-space: pre-wrap;
+  }
+}
+
+.message-user {
+  align-self: flex-end;
+  background: var(--p-primary-color);
+  color: var(--p-primary-contrast-color, #fff);
+}
+
+.message-bot {
+  align-self: flex-start;
+  background: var(--p-content-background);
+  border: 1px solid var(--p-content-border-color);
+}
