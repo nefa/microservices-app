@@ -1,0 +1,65 @@
+// The host element itself is the bubble - chat-page.html binds
+// [class.message-user]/[class.message-bot] directly onto <app-message-
+// bubble>, so align-self here actually affects layout (it only works on
+// a direct flex child of .message-list, which this host is - an inner
+// wrapper div wouldn't be).
+:host {
+  display: block;
+  max-width: 75%;
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.75rem;
+  line-height: 1.4;
+}
+
+:host(.message-user) {
+  align-self: flex-end;
+  background: var(--p-primary-color);
+  color: var(--p-primary-contrast-color, #fff);
+}
+
+:host(.message-bot) {
+  align-self: flex-start;
+  background: var(--p-content-background);
+  border: 1px solid var(--p-content-border-color);
+}
+
+// 75% is tuned for short chat text - a 4-column table with a full ISO
+// timestamp in it doesn't fit that comfortably (was overflowing past
+// the bubble's own edge before this existed, see chat_router.py's
+// _handle_recent_documents for the columns that drove this). Applied
+// via chat-page.html's [class.message-data] binding, set whenever the
+// message actually carries table/list data.
+:host(.message-data) {
+  max-width: 92%;
+}
+
+p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+// Safety net for whatever still doesn't fit even at 92% (a long
+// unbreakable value, a narrower viewport, more columns later) - keeps
+// that overflow scrollable inside the bubble instead of it spilling
+// past the bubble's own border like the min-width-forced version did.
+.table-scroll {
+  margin-top: 0.5rem;
+  overflow-x: auto;
+}
+
+.excerpt-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.excerpt-title {
+  font-weight: 600;
+}
+
+.excerpt-snippet {
+  margin: 0.15rem 0 0;
+  white-space: pre-wrap;
+}

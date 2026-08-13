@@ -10,11 +10,23 @@ import { INTERNAL_API_KEY } from '../common/internal-api.constants';
 // kept in sync by hand. `type`/`data` only grow richer (chart,
 // comparison, ...) as chatbot-rag-python adds handlers for them - see
 // ARCHITECTURE.md's "Chat responses" section.
-export type ChatResponseType = 'text' | 'table';
+export type ChatResponseType = 'text' | 'table' | 'list';
 
 export interface ChatTableData {
   columns: string[];
   rows: Record<string, unknown>[];
+}
+
+// Semantic search's result shape (chat_router.py's ListData) - one item
+// per matching document_chunk, not a generated answer (see that file's
+// module docstring for why: retrieval only, no LLM synthesis yet).
+export interface ChatListItem {
+  title: string;
+  snippet: string;
+}
+
+export interface ChatListData {
+  items: ChatListItem[];
 }
 
 export interface ChatSuggestion {
@@ -25,7 +37,7 @@ export interface ChatSuggestion {
 export interface ChatbotResponse {
   reply: string;
   type: ChatResponseType;
-  data: ChatTableData | null;
+  data: ChatTableData | ChatListData | null;
   suggestions: ChatSuggestion[];
 }
 

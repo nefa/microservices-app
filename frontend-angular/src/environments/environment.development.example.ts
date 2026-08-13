@@ -5,4 +5,5 @@
 export const environment = {
   production: false,
   primeNgLicenseKey: 'YOUR-LICENSE-KEY-HERE',
+  gatewayUrl: 'http://localhost:3000',
 };

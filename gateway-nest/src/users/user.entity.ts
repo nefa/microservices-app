@@ -1,5 +1,13 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
+// Who can review/approve a pending_document submission in
+// chatbot-rag-python (see that service's README - "no endpoint a
+// reviewer UI could call to approve a submission" is the gap this role
+// exists to eventually close). Not enforced anywhere yet on its own -
+// this column is the identity/authorization foundation the approval
+// endpoints and reviewer UI will check against once they exist.
+export type UserRole = 'employee' | 'manager';
+
 // TypeORM's equivalent of TaskApi's TaskEntity/CategoryEntity: a plain
 // class with decorators instead of EF Core's convention-based mapping.
 // @Entity('user') plays the same role as AppDbContext's
@@ -26,6 +34,16 @@ export class User {
   // holds a bcrypt hash once we build the register/login endpoints.
   @Column()
   passwordHash: string;
+
+  // Plain varchar, not a Postgres enum type - same reasoning as
+  // chatbot-rag-python's PendingDocument.status: cheap to extend later
+  // (e.g. an 'admin' role) without a migration, and this is a
+  // single-service-owned column, not a cross-language contract that
+  // needs stricter enforcement. Existing rows get 'employee' via this
+  // default the moment synchronize:true adds the column - see seed.ts
+  // for how bob's row actually becomes 'manager'.
+  @Column({ default: 'employee' })
+  role: UserRole;
 
   // TypeORM's equivalent of "CreatedAt = DateTime.UtcNow" - automatically
   // set to the current timestamp when a row is first inserted.
