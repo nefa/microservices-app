@@ -2,10 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { jwtConstants } from './jwt.constants';
+import { UserRole } from '../users/user.entity';
 
 interface JwtPayload {
   sub: number;
   email: string;
+  role: UserRole;
 }
 
 // Passport is Nest's standard mechanism for authentication strategies -
@@ -31,6 +33,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   // known to be genuine. Whatever this returns becomes `request.user` in
   // any guarded route handler.
   validate(payload: JwtPayload) {
-    return { userId: payload.sub, email: payload.email };
+    return { userId: payload.sub, email: payload.email, role: payload.role };
   }
 }

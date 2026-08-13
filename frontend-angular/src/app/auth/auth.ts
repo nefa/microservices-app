@@ -1,10 +1,19 @@
 import { Service, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
+import { environment } from '../../environments/environment';
 
-interface AuthUser {
+// Mirrors gateway-nest's UserRole (user.entity.ts) - same "kept in sync
+// by hand across the language boundary" situation as the chat response
+// types in chat.ts. Not used for any gating yet (no manager-only page
+// exists) - carried through now so Auth.currentUser() already exposes
+// it once one does.
+export type UserRole = 'employee' | 'manager';
+
+export interface AuthUser {
   id: number;
   email: string;
+  role: UserRole;
   createdAt: string;
 }
 
@@ -13,12 +22,6 @@ interface LoginResponse {
   token: string;
 }
 
-// NOTE: hardcoded here for learning purposes, same caveat as every
-// hardcoded config value on the backend (Postgres connection, JWT
-// secrets) - in a real app this would come from Angular's environment
-// files (environment.ts / environment.prod.ts), since it needs to differ
-// between local dev and a deployed build.
-const GATEWAY_URL = 'http://localhost:3000';
 const TOKEN_STORAGE_KEY = 'auth_token';
 const USER_STORAGE_KEY = 'auth_user';
 
@@ -47,7 +50,7 @@ export class Auth {
   readonly isAuthenticated = computed(() => this.tokenSignal() !== null);
 
   login(email: string, password: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${GATEWAY_URL}/auth/login`, { email, password }).pipe(
+    return this.http.post<LoginResponse>(`${environment.gatewayUrl}/auth/login`, { email, password }).pipe(
       // tap runs a side effect when the request succeeds, without
       // altering the value flowing through the Observable - the login()
       // caller still receives the raw LoginResponse, while this service

@@ -1,6 +1,7 @@
 import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 // Mirrors gateway-nest's ChatbotResponse (chat.service.ts), which in
 // turn mirrors chatbot-rag-python's ChatResponse (chat_router.py) -
@@ -45,15 +46,25 @@ export interface ChatResponse {
   suggestions: ChatSuggestion[];
 }
 
-// NOTE: hardcoded here for learning purposes, same caveat as everywhere
-// else in this project - a real app would read this from environment.ts.
-const GATEWAY_URL = 'http://localhost:3000';
+// The FE's own message-list shape - one entry per turn (user or bot),
+// carrying a ChatResponse's fields flattened onto it once a bot reply
+// arrives. Lives here rather than in chat-page.ts since MessageBubble
+// needs the same shape ChatPage does, not just the page that owns the
+// list.
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'bot';
+  text: string;
+  type?: ChatResponseType;
+  data?: ChatTableData | ChatListData | null;
+  suggestions?: ChatSuggestion[];
+}
 
 @Service()
 export class Chat {
   private readonly http = inject(HttpClient);
 
   sendMessage(message: string): Observable<ChatResponse> {
-    return this.http.post<ChatResponse>(`${GATEWAY_URL}/chat`, { message });
+    return this.http.post<ChatResponse>(`${environment.gatewayUrl}/chat`, { message });
   }
 }

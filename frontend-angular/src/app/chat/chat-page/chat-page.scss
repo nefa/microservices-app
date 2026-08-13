@@ -27,26 +27,7 @@
   text-align: center;
 }
 
-.message {
-  max-width: 75%;
-  padding: 0.6rem 0.9rem;
-  border-radius: 0.75rem;
-  line-height: 1.4;
-
-  p {
-    margin: 0;
-    white-space: pre-wrap;
-  }
-}
-
-.message-user {
-  align-self: flex-end;
-  background: var(--p-primary-color);
-  color: var(--p-primary-contrast-color, #fff);
-}
-
-.message-bot {
-  align-self: flex-start;
-  background: var(--p-content-background);
-  border: 1px solid var(--p-content-border-color);
-}
+// Bubble chrome (padding/background/align-self per role) lives on
+// app-message-bubble's own :host now - see message-bubble.scss.
+// align-self only affects a direct flex child of this .message-list,
+// which is app-message-bubble itself, not something nested inside it.

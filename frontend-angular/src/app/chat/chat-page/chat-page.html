@@ -9,9 +9,12 @@
     }
 
     @for (message of messages(); track message.id) {
-      <div class="message" [class.message-user]="message.role === 'user'" [class.message-bot]="message.role === 'bot'">
-        <p>{{ message.text }}</p>
-      </div>
+      <app-message-bubble
+        [message]="message"
+        [class.message-user]="message.role === 'user'"
+        [class.message-bot]="message.role === 'bot'"
+        [class.message-data]="message.type === 'table' || message.type === 'list'"
+      />
     }
   </div>
 

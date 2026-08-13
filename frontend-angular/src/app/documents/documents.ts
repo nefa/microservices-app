@@ -1,16 +1,13 @@
 import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export type DocumentFormat = 'pdf' | 'csv';
 
 interface SubmitResponse {
   filesSubmitted: number;
 }
-
-// NOTE: hardcoded here for learning purposes, same caveat as everywhere
-// else in this project - a real app would read this from environment.ts.
-const GATEWAY_URL = 'http://localhost:3000';
 
 @Service()
 export class Documents {
@@ -38,6 +35,6 @@ export class Documents {
     // when it sees the body is a FormData instance. Setting it manually
     // would overwrite that with a header missing the boundary, breaking
     // the upload.
-    return this.http.post<SubmitResponse>(`${GATEWAY_URL}/documents/submit`, formData);
+    return this.http.post<SubmitResponse>(`${environment.gatewayUrl}/documents/submit`, formData);
   }
 }

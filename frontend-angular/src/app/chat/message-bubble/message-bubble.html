@@ -1,0 +1,33 @@
+<p>{{ message().text }}</p>
+
+@if (tableData(); as table) {
+  <div class="table-scroll">
+    <p-table [value]="table.rows" [columns]="table.columns" styleClass="p-datatable-sm">
+      <ng-template #header>
+        <tr>
+          @for (column of table.columns; track column) {
+            <th>{{ column }}</th>
+          }
+        </tr>
+      </ng-template>
+      <ng-template #body let-row>
+        <tr>
+          @for (column of table.columns; track column) {
+            <td>{{ row[column] }}</td>
+          }
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+}
+
+@if (listData(); as list) {
+  <ul class="excerpt-list">
+    @for (item of list.items; track item.title + item.snippet) {
+      <li>
+        <span class="excerpt-title">{{ item.title }}</span>
+        <p class="excerpt-snippet">{{ item.snippet }}</p>
+      </li>
+    }
+  </ul>
+}
