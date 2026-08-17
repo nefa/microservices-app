@@ -19,7 +19,9 @@ different kinds of client needs, not one pattern for everything:
   whichever services hold the pieces and returns one combined response.
 
 Nothing about the REST paths changes when the GraphQL layer is added -
-it sits alongside them, not in front of them.
+it sits *behind the same gateway*, not beside it as a second front door.
+See "Where the BFF sits" below for why that distinction is deliberate,
+not just phrasing.
 
 ## Diagram
 
@@ -29,12 +31,15 @@ flowchart TB
         angular["Angular App<br/>(frontend-angular)"]
     end
 
+    subgraph gw["Gateway - the one front door"]
+        gateway["gateway-nest<br/>(NestJS, REST)<br/>verifies JWT · calls LMA · proxies GraphQL"]
+    end
+
     subgraph bff["GraphQL BFF - PLANNED"]
         graphql["Node + Apollo Server<br/>(graphql-bff)"]
     end
 
     subgraph services["Backend Services"]
-        gateway["gateway-nest<br/>(NestJS, REST)<br/>auth · chat proxy · ingest proxy"]
         chatbot["chatbot-rag-python<br/>(FastAPI, REST)<br/>RAG retrieval"]
         voice["voice-recognition-python<br/>PLANNED"]
         stt["speech-to-text-node<br/>PLANNED"]
@@ -45,16 +50,20 @@ flowchart TB
         pg2[("Postgres + pgvector<br/>chatbotdb - chunks/embeddings")]
     end
 
-    %% Direct REST - actions/writes, unchanged by the BFF
+    %% Every client request - REST or GraphQL - goes to gateway-nest first
     angular -- "REST: login, chat, ingest" --> gateway
+    angular -. "GraphQL: dashboard/overview queries" .-> gateway
     gateway -- "REST + shared secret<br/>+ forwarded user id" --> chatbot
     gateway --> pg1
     chatbot --> pg2
 
-    %% GraphQL BFF - aggregated reads, additive
-    angular -. "GraphQL: dashboard/overview queries" .-> graphql
-    graphql -. "REST" .-> gateway
-    graphql -. "REST" .-> chatbot
+    %% gateway-nest proxies GraphQL straight through - already-verified
+    %% JWT forwarded as trusted headers, graphql-bff never re-verifies it
+    gateway -. "proxied, same trusted headers" .-> graphql
+
+    %% BFF fans out DIRECTLY to services for the aggregation itself -
+    %% no bouncing back through gateway-nest per field
+    graphql -. "REST + shared secret<br/>(2nd trusted internal caller)" .-> chatbot
     graphql -. "REST" .-> voice
     graphql -. "REST" .-> stt
 
@@ -64,6 +73,56 @@ flowchart TB
 ```
 
 Solid arrows = built and working today. Dashed arrows/boxes = planned.
+
+## Where the BFF sits
+
+Two things are easy to conflate here, so this is explicit about both -
+the earlier sketch of this diagram had `graphql-bff` as a second front
+door the Angular app talked to directly, which quietly duplicated
+`gateway-nest`'s auth responsibility. That's not the plan anymore.
+
+**Every client has exactly one front door: `gateway-nest`.** Whether a
+request is a REST action or a GraphQL aggregated read, it goes to
+`gateway-nest` first - `gateway-nest` stays the only thing that verifies
+a JWT and the only thing that ever calls LMA (see
+`PROJECT-Structure-diagram.md` §1). GraphQL requests get proxied
+straight through to `graphql-bff`, carrying the same
+`X-User-Id`/`X-User-Role`/`X-Subscription-Tier` headers `gateway-nest`
+already forwards to every REST-called microservice. `graphql-bff` never
+independently verifies a token, the same way `chatbot-rag-python` never
+does.
+
+**`graphql-bff` fans out directly to microservices**, not back through
+`gateway-nest` per field. Deliberate, not a shortcut: bouncing every
+fanned-out call back through `gateway-nest` would mean a single
+dashboard query touching N services pays N round trips through the
+gateway *in addition to* N calls to the services themselves - calling
+services directly cuts that in half.
+
+**Consequence, stated plainly:** `graphql-bff` becomes a *second*
+service trusted with the internal-key secret, alongside `gateway-nest`.
+Nothing about `chatbot-rag-python`'s `verify_internal_request`-style
+check has to change to support this - it only checks that a caller
+holds the shared secret, never which internal service is holding it.
+Still just two trusted internal callers, not an ever-growing list -
+worth keeping it that way rather than letting other services start
+calling each other directly too.
+
+**One rule that doesn't bend as more services get composed here:**
+`graphql-bff` still goes through each microservice's own REST API - it
+never reaches into another service's Postgres directly, even though
+it's "internal." Same "each service owns its data, one clear owner per
+request" rule the REST paths already follow; the aggregation layer
+doesn't get an exception to it.
+
+**Deliberately not doing yet:** a single hand-written schema mapping
+every backend service (the `RESTDataSource` approach below) is fine to
+start with, but stops scaling gracefully once enough services are
+composed into it that one schema file becomes a maintenance bottleneck
+owned by nobody in particular. **Apollo Federation** - each microservice
+publishing its own small subgraph, a federation gateway composing them
+- is the answer if that specific pain actually shows up. Not worth
+building toward preemptively.
 
 ## Chat responses: semantic answers vs. structured queries
 
