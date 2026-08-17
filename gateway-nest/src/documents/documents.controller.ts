@@ -1,14 +1,29 @@
-import { Body, Controller, Post, Req, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseIntPipe,
+  Post,
+  Req,
+  UploadedFiles,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import { memoryStorage } from 'multer';
 import type { Request } from 'express';
 import { DocumentsService } from './documents.service';
+import { ManagerGuard } from '../auth/manager.guard';
+import { UserRole } from '../users/user.entity';
 
 // Same shape JwtStrategy.validate() returns, attached by Passport once
 // AuthGuard('jwt') succeeds - see chat.controller.ts for the original.
 interface AuthenticatedRequest extends Request {
-  user: { userId: number; email: string };
+  user: { userId: number; email: string; role: UserRole };
 }
 
 @Controller('documents')
@@ -31,5 +46,32 @@ export class DocumentsController {
     @Req() request: AuthenticatedRequest,
   ) {
     return this.documentsService.submit(format, files, request.user.userId);
+  }
+
+  // Manager-only from here down. ManagerGuard runs after AuthGuard('jwt')
+  // (the class-level guard runs before a method-level one), so
+  // request.user is already populated by the time ManagerGuard checks
+  // the role - see that guard's own comment.
+  @Get('pending')
+  @UseGuards(ManagerGuard)
+  async listPending(@Req() request: AuthenticatedRequest) {
+    return this.documentsService.listPending(request.user.userId);
+  }
+
+  @Post(':id/approve')
+  @UseGuards(ManagerGuard)
+  async approve(@Param('id', ParseIntPipe) id: number, @Req() request: AuthenticatedRequest) {
+    return this.documentsService.approve(id, request.user.userId);
+  }
+
+  @Post(':id/reject')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(ManagerGuard)
+  async reject(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('reason') reason: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    await this.documentsService.reject(id, request.user.userId, reason);
   }
 }

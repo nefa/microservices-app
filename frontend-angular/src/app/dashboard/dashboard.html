@@ -8,5 +8,8 @@
 
     <p-button label="Ingest Documents" routerLink="/ingest" />
     <p-button label="Chat" routerLink="/chat" severity="secondary" />
+    @if (currentUser()?.role === 'manager') {
+      <p-button label="Review Documents" routerLink="/review" severity="help" />
+    }
   </p-card>
 </div>

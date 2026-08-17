@@ -6,6 +6,15 @@ from pydantic import BaseModel
 from chat_router import ChatResponse, handle_semantic_query, handle_structured_query, is_structured_query
 from chunking import parse_csv, parse_pdf
 from database import DocumentChunk, PendingDocument, SessionLocal, init_db
+from document_review import (
+    ApproveResponse,
+    DocumentAlreadyReviewedError,
+    DocumentNotFoundError,
+    PendingDocumentSummary,
+    approve,
+    list_pending,
+    reject,
+)
 from embeddings import embed_text
 
 
@@ -58,6 +67,10 @@ class SubmitResponse(BaseModel):
     filesSubmitted: int
 
 
+class RejectRequest(BaseModel):
+    reason: str
+
+
 # A FastAPI dependency - a reusable function any endpoint can require via
 # Depends(...). This is this service's ONLY authentication: it never
 # validates a JWT itself, it just checks that the caller holds the shared
@@ -97,11 +110,9 @@ def chat(request: ChatRequest, user_id: str = Depends(verify_internal_request)):
 
 
 # Stores the raw upload for review - no chunking or embedding here, that
-# only happens once a manager approves (see ARCHITECTURE.md's "Document
-# review before ingestion" section). This is what
-# frontend-angular's ingestion-submission-form will call once the
-# gateway proxy in front of it is updated to point here instead of
-# /documents/ingest.
+# only happens once a manager approves (see document_review.py's
+# approve(), wired in below) or the /documents/ingest shortcut is called
+# directly.
 @app.post("/documents/submit", response_model=SubmitResponse)
 def submit_documents(
     format: str = Form(...),
@@ -168,3 +179,47 @@ def ingest_documents(
         session.close()
 
     return IngestResponse(filesIngested=len(files), chunksStored=chunks_stored)
+
+
+# Manager-only in practice, but that's enforced by gateway-nest (its
+# ManagerGuard), not here - see document_review.py's module docstring.
+# X-User-Id on these three endpoints is the reviewer's id, not a
+# submitter's - a different meaning than the same header carries on
+# /documents/submit and /documents/ingest above.
+@app.get("/documents/pending", response_model=list[PendingDocumentSummary])
+def get_pending_documents(user_id: str = Depends(verify_internal_request)):
+    session = SessionLocal()
+    try:
+        return list_pending(session)
+    finally:
+        session.close()
+
+
+@app.post("/documents/{document_id}/approve", response_model=ApproveResponse)
+def approve_document(document_id: int, user_id: str = Depends(verify_internal_request)):
+    session = SessionLocal()
+    try:
+        return approve(document_id, user_id, session)
+    except DocumentNotFoundError:
+        raise HTTPException(status_code=404, detail="Pending document not found.")
+    except DocumentAlreadyReviewedError:
+        raise HTTPException(status_code=409, detail="Document has already been reviewed.")
+    finally:
+        session.close()
+
+
+@app.post("/documents/{document_id}/reject", status_code=204)
+def reject_document(
+    document_id: int,
+    request: RejectRequest,
+    user_id: str = Depends(verify_internal_request),
+):
+    session = SessionLocal()
+    try:
+        reject(document_id, user_id, request.reason, session)
+    except DocumentNotFoundError:
+        raise HTTPException(status_code=404, detail="Pending document not found.")
+    except DocumentAlreadyReviewedError:
+        raise HTTPException(status_code=409, detail="Document has already been reviewed.")
+    finally:
+        session.close()

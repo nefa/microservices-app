@@ -1,0 +1,11 @@
+// Wider than ingest-page/chat-page's centered narrow layouts - this
+// page is a table, not a form or a chat column, so it wants the room.
+.review-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.review-page h2 {
+  margin-top: 0;
+}

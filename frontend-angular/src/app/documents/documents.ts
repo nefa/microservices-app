@@ -9,6 +9,22 @@ interface SubmitResponse {
   filesSubmitted: number;
 }
 
+// Mirrors gateway-nest's PendingDocumentSummary (documents.service.ts),
+// which mirrors chatbot-rag-python's PendingDocumentSummary
+// (document_review.py) - same cross-language "kept in sync by hand"
+// situation as chat.ts's ChatResponse.
+export interface PendingDocument {
+  id: number;
+  sourceFilename: string;
+  format: DocumentFormat;
+  submittedBy: string;
+  createdAt: string;
+}
+
+interface ApproveResponse {
+  chunksStored: number;
+}
+
 @Service()
 export class Documents {
   private readonly http = inject(HttpClient);
@@ -36,5 +52,23 @@ export class Documents {
     // would overwrite that with a header missing the boundary, breaking
     // the upload.
     return this.http.post<SubmitResponse>(`${environment.gatewayUrl}/documents/submit`, formData);
+  }
+
+  // Manager-only on the backend (gateway-nest's ManagerGuard rejects
+  // anyone else with a 403) - this service doesn't re-check the role
+  // itself, same "don't duplicate an authorization decision" reasoning
+  // as everywhere else this pattern shows up in this project.
+  getPending(): Observable<PendingDocument[]> {
+    return this.http.get<PendingDocument[]>(`${environment.gatewayUrl}/documents/pending`);
+  }
+
+  approve(id: number): Observable<ApproveResponse> {
+    return this.http.post<ApproveResponse>(`${environment.gatewayUrl}/documents/${id}/approve`, {});
+  }
+
+  // No response body - gateway-nest's reject endpoint returns 204,
+  // matching chatbot-rag-python's own 204 for the same action.
+  reject(id: number, reason: string): Observable<void> {
+    return this.http.post<void>(`${environment.gatewayUrl}/documents/${id}/reject`, { reason });
   }
 }
