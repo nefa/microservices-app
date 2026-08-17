@@ -1,0 +1,15 @@
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.actions input {
+  width: 12rem;
+}
+
+p-message {
+  display: block;
+  margin-top: 1rem;
+}
